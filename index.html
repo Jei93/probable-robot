@@ -3,345 +3,427 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Clicker: Realm of Orbs — Juego (corregido)</title>
+  <title>Clicker épico — versión mejorada</title>
   <style>
-    /* GAME THEME: vibrante, colores neón, gran puntuación y menú estilizado */
-    :root{
-      --bg1:#040414; --bg2:#08102a; --panel:#07132a; --accent:#ff5fa2; --accent2:#6b8cff;
-      --glass: rgba(255,255,255,0.04); --muted:#9fb0c8; --gold:#ffd166;
-    }
+    /* Estilos modernos y visuales chulos */
+    :root{--bg1:#021124;--bg2:#06122a;--card:#071a2b;--accent:#06b6d4;--accent2:#7c3aed;--glass:rgba(255,255,255,0.03);--muted:#9fb0c8}
     *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial;color:#eaf6ff}
-    body{background:radial-gradient(1000px 400px at 10% 10%, rgba(107,140,255,0.06), transparent), linear-gradient(180deg,var(--bg1),var(--bg2));display:flex;align-items:center;justify-content:center;padding:20px}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial;color:#ecf8ff}
+    body{background:linear-gradient(180deg,var(--bg1),var(--bg2));display:flex;align-items:center;justify-content:center;padding:20px}
+    .wrap{width:1100px;max-width:100%;display:grid;grid-template-columns:1fr 380px;gap:18px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:12px;padding:16px;box-shadow:0 10px 40px rgba(2,6,23,0.7);position:relative;overflow:hidden}
 
-    /* Layout */
-    .game-wrap{width:1180px;max-width:100%;display:grid;grid-template-columns:1fr 360px;gap:18px}
-    .panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:14px;box-shadow:0 12px 40px rgba(2,6,23,0.7);position:relative;overflow:hidden}
+    header h1{margin:0;font-size:20px}
+    .top{display:flex;gap:12px;align-items:center}
+    .scoreBox{display:flex;flex-direction:column}
+    .scoreBig{font-size:44px;font-weight:800;letter-spacing:1px}
+    .subMuted{color:var(--muted);font-size:13px}
 
-    /* Header/menu */
-    .topbar{display:flex;align-items:center;gap:12px}
-    .logo{display:flex;align-items:center;gap:10px}
-    .logo .orb{width:48px;height:48px;border-radius:50%;background:conic-gradient(from 180deg at 50% 50%, var(--accent), var(--accent2));box-shadow:0 6px 20px rgba(107,140,255,0.18);display:flex;align-items:center;justify-content:center;font-weight:800}
-    h1{margin:0;font-size:18px}
+    #mainClick{width:100%;padding:28px;border-radius:12px;font-size:20px;background:linear-gradient(180deg,var(--accent),var(--accent2));border:none;color:white;cursor:pointer;box-shadow:0 8px 30px rgba(12,125,160,0.15);transform-origin:center}
+    #mainClick:active{transform:scale(0.98)}
 
-    /* Large score */
-    .play-area{display:flex;flex-direction:column;gap:12px}
-    .score-big{display:flex;align-items:center;gap:16px}
-    .score-bubble{background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));border-radius:18px;padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:360px}
-    .score-num{font-size:72px;font-weight:900;letter-spacing:2px;text-shadow:0 6px 30px rgba(107,140,255,0.12)}
-    .score-sub{color:var(--muted);font-size:14px}
+    .controls{display:flex;gap:8px;margin-top:10px}
+    .btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer}
+    .btn.ghost{background:transparent}
 
-    /* Click orb */
-    #clickOrb{width:220px;height:220px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;border:6px solid rgba(255,255,255,0.04);cursor:pointer;box-shadow:0 18px 60px rgba(107,140,255,0.12);background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.06), transparent), linear-gradient(135deg,var(--accent),var(--accent2));transform:scale(1);transition:transform 120ms ease}
-    #clickOrb:active{transform:scale(0.97)}
+    .rightPanel{display:flex;flex-direction:column;gap:10px}
+    .statsGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+    .stat{background:rgba(255,255,255,0.02);padding:10px;border-radius:8px;font-size:14px}
 
-    /* Controls */
-    .controls{display:flex;gap:8px;flex-wrap:wrap}
-    .btn{background:var(--panel);border:1px solid rgba(255,255,255,0.03);padding:10px 14px;border-radius:10px;color:var(--muted);cursor:pointer}
-    .btn.primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#07102b;font-weight:700;border:none}
-    .btn.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.03)}
+    .upgrades{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .upgrade{display:flex;justify-content:space-between;align-items:center;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))}
+    .upgrade .meta{display:flex;flex-direction:column}
+    .price{font-weight:700}
 
-    /* Right column */
-    .side{display:flex;flex-direction:column;gap:12px}
-    .card{padding:12px;border-radius:12px}
-    .shop-item{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01))}
-    .shop-item img{width:56px;height:56px;border-radius:10px;object-fit:cover}
-    .shop-meta{flex:1}
-    .muted{color:var(--muted);font-size:13px}
+    .visuals{height:140px;border-radius:10px;background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.08));display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .visuals .spark{position:absolute;width:260px;height:260px;filter:blur(36px);opacity:0.14;border-radius:50%}
+    .spark.left{left:-30px;background:radial-gradient(circle at 30% 30%, #7c3aed, transparent 40%)}
+    .spark.right{right:-30px;background:radial-gradient(circle at 70% 70%, #06b6d4, transparent 40%)}
 
-    /* Menu */
-    .menu{position:absolute;top:14px;right:14px}
-    .menu-btn{background:rgba(0,0,0,0.16);border-radius:10px;padding:8px;cursor:pointer}
-    .menu-panel{position:absolute;right:0;top:46px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:10px;box-shadow:0 10px 30px rgba(2,6,23,0.6);min-width:280px}
-    .menu-panel .row{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+    .progressWrap{margin-top:10px}
+    .progressBar{height:12px;background:rgba(255,255,255,0.04);border-radius:8px;overflow:hidden}
+    .progressFill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width 400ms ease}
 
-    /* Progress */
-    .progressWrap{margin-top:8px}
-    .progressBar{height:12px;background:rgba(255,255,255,0.03);border-radius:8px;overflow:hidden}
-    .progressFill{height:100%;width:0%;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width 400ms ease}
+    .codeArea{display:flex;flex-direction:column;gap:6px}
+    textarea.code{width:100%;height:90px;border-radius:8px;padding:8px;background:#071226;border:none;color:#bfefff}
 
-    /* Little HUD */
-    .hud{display:flex;gap:10px;font-size:13px}
-    .hud .pill{background:rgba(255,255,255,0.02);padding:8px;border-radius:999px}
-
-    /* Floating small helpers */
-    .float{position:absolute;pointer-events:none;font-weight:800}
+    footer{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
 
     /* responsive */
-    @media (max-width:1080px){.game-wrap{grid-template-columns:1fr}} 
+    @media (max-width:980px){.wrap{grid-template-columns:1fr}}
+    /* small animations */
+    .floatNum{position:absolute;pointer-events:none;font-weight:700}
   </style>
 </head>
 <body>
-  <div class="game-wrap">
-
-    <!-- Main Area -->
-    <div class="panel" id="mainPanel">
-      <div class="topbar">
-        <div class="logo"><div class="orb">R</div><div><h1>Realm of Orbs</h1><div class="muted">Un clicker más tipo juego</div></div></div>
-        <div style="margin-left:auto" class="hud">
-          <div class="pill">Rango: <strong id="prestige">0</strong></div>
-          <div class="pill">Autos: <strong id="autoCount">0</strong></div>
+  <div class="wrap">
+    <div class="card" id="mainCard">
+      <header class="top">
+        <div>
+          <h1>Clicker épico</h1>
+          <div class="subMuted">Clic manual + autoclick + progresión infinita + export/import</div>
         </div>
-        <div class="menu">
-          <div class="menu-btn" id="openMenu">☰</div>
-          <div id="menuPanel" class="menu-panel" style="display:none">
-            <div class="row"><div class="muted">Sonidos</div><div><input type="checkbox" id="sfxToggle" checked></div></div>
-            <div class="row"><div class="muted">Música</div><div><input type="checkbox" id="musicToggle"></div></div>
-            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03)" />
-            <div class="row"><div class="muted">Exportar partida</div><div><button id="exportBtn" class="btn">Exportar</button></div></div>
-            <div class="row"><div class="muted">Importar partida</div><div><button id="importDialogBtn" class="btn ghost">Importar</button></div></div>
-            <div class="row"><div class="muted">Guardar local</div><div><button id="saveLocalMenu" class="btn">Guardar</button></div></div>
-            <div class="row"><div class="muted">Cargar local</div><div><button id="loadLocalMenu" class="btn">Cargar</button></div></div>
-            <div class="row"><div class="muted">Reiniciar</div><div><button id="resetMenu" class="btn ghost">Reset</button></div></div>
+        <div style="margin-left:auto;text-align:right" class="scoreBox">
+          <div class="subMuted">Puntos</div>
+          <div id="score" class="scoreBig">0</div>
+        </div>
+      </header>
+
+      <div style="margin-top:12px">
+        <div class="visuals">
+          <div class="spark left"></div>
+          <div class="spark right"></div>
+          <canvas id="particles" style="position:relative;z-index:2;width:100%;height:100%"></canvas>
+          <div style="position:relative;z-index:3;text-align:center">
+            <div class="subMuted">CPC (por clic)</div>
+            <div id="cpc" style="font-size:28px;font-weight:700">1</div>
           </div>
         </div>
-      </div>
 
-      <div class="play-area">
-        <div class="score-big">
-          <div class="score-bubble" style="flex:1;display:flex;align-items:center;justify-content:space-between;">
-            <div style="display:flex;flex-direction:column;gap:6px">
-              <div class="muted">Tu poder</div>
-              <div id="score" class="score-num">0</div>
-              <div class="muted">(+ <span id="cpc">1</span> por clic)</div>
-            </div>
-            <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
-              <div id="clickOrb">Clic</div>
-              <div class="muted">Pulsa o presiona ESPACIO</div>
-            </div>
+        <div style="margin-top:12px">
+          <button id="mainClick">Clic aquí (o ESPACIO)</button>
+          <div class="controls">
+            <button id="buyClickPower" class="btn">Mejorar clic (<span id="costClickPower">10</span>)</button>
+            <button id="buyAuto" class="btn">Comprar autoclicker (<span id="costAuto">50</span>)</button>
+            <button id="toggleAuto" class="btn">Encender autoclickers</button>
+            <button id="ascend" class="btn">Ascender (prestige)</button>
+            <button id="reset" class="btn ghost">Reiniciar</button>
           </div>
 
-          <div style="width:260px;display:flex;flex-direction:column;gap:10px">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div class="muted">Progreso</div>
-              <div class="muted">Meta: <strong id="target">1000</strong></div>
-            </div>
+          <div class="progressWrap">
+            <div class="subMuted">Progreso hacia el siguiente rango</div>
             <div class="progressBar"><div id="progressFill" class="progressFill"></div></div>
-            <div style="display:flex;gap:8px">
-              <button id="buyClickPower" class="btn">Subir clic (<span id="costClickPower">10</span>)</button>
-              <button id="buyAuto" class="btn">Auto (<span id="costAuto">50</span>)</button>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button id="toggleAuto" class="btn">Encender autos</button>
-              <button id="ascend" class="btn primary">Ascender</button>
-            </div>
+          </div>
+
+          <div class="statsGrid">
+            <div class="stat">Autoclickers: <strong id="autoCount">0</strong></div>
+            <div class="stat">Ganancia / s: <strong id="perSec">0</strong></div>
+            <div class="stat">Clicks totales: <strong id="totalClicks">0</strong></div>
+            <div class="stat">Rango (prestige): <strong id="prestige">0</strong></div>
           </div>
         </div>
 
-        <div style="display:flex;gap:12px;align-items:flex-start">
-          <div style="flex:1">
-            <h3 class="muted">Tienda</h3>
-            <div class="card">
-              <div class="shop-item" id="shop1">
-                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' rx='12' fill='%237c3aed'/><text x='50%' y='55%' font-size='36' text-anchor='middle' fill='white' font-family='Arial' dy='.35em'>C</text></svg>" alt="item">
-                <div class="shop-meta">
-                  <div style="font-weight:700">Cristal mejorado</div>
-                  <div class="muted">Aumenta el multiplicador de clic</div>
-                </div>
-                <div style="text-align:right">
-                  <div class="price">Coste: <strong id="shop1Cost">500</strong></div>
-                  <div class="muted">Comprados: <span id="shop1Count">0</span></div>
-                </div>
-              </div>
+        <div style="margin-top:12px" class="upgrades">
+          <div class="upgrade">
+            <div class="meta">
+              <div style="font-weight:700">Mejora de clic</div>
+              <div class="subMuted">Aumenta CPC multiplicativamente</div>
+            </div>
+            <div style="text-align:right">
+              <div class="price"><span id="costClickPowerRight">10</span></div>
+              <div class="subMuted">Nivel: <span id="clickLevel">0</span></div>
             </div>
           </div>
 
-          <div style="width:250px">
-            <h3 class="muted">Estadísticas</h3>
-            <div class="card">
-              <div class="muted">Clicks totales</div>
-              <div style="font-weight:800;font-size:20px" id="totalClicks">0</div>
-              <div style="height:8px"></div>
-              <div class="muted">Ganancia / s</div>
-              <div style="font-weight:800;font-size:20px" id="perSec">0</div>
+          <div class="upgrade">
+            <div class="meta">
+              <div style="font-weight:700">Autoclicker</div>
+              <div class="subMuted">Hace clic automáticamente cada segundo</div>
+            </div>
+            <div style="text-align:right">
+              <div class="price"><span id="costAutoRight">50</span></div>
+              <div class="subMuted">Comprados: <span id="autoCountRight">0</span></div>
             </div>
           </div>
         </div>
 
       </div>
+
+      <footer>Guardar/exportar: usa el panel derecho. Se guarda también en local.</footer>
     </div>
 
-    <!-- Right column: export/import & menu (modal) -->
-    <div class="side">
-      <div class="card">
-        <h3>Guardar / Compartir</h3>
-        <div class="muted">Exporta un código de tu partida o importa para cargarla. También se guarda localmente automáticamente.</div>
-        <textarea id="exportArea" style="width:100%;height:100px;margin-top:8px;border-radius:8px;background:#071226;border:none;color:#bfefff;padding:8px" readonly placeholder="Pulsa Exportar para generar código"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button id="exportBtnRight" class="btn">Exportar</button>
+    <div class="card">
+      <h2>Guardar — exportar / importar</h2>
+      <div class="codeArea">
+        <div class="subMuted">Código exportable (copiar/pegar). También puedes usarlo para compartir tu partida.</div>
+        <textarea id="exportArea" class="code" readonly placeholder="Haz click en Exportar"></textarea>
+        <div style="display:flex;gap:8px">
+          <button id="exportBtn" class="btn">Exportar</button>
           <button id="copyExport" class="btn">Copiar</button>
-          <button id="openImport" class="btn">Importar</button>
-        </div>
-        <textarea id="importArea" style="width:100%;height:80px;margin-top:8px;border-radius:8px;background:#071226;border:none;color:#bfefff;padding:8px" placeholder="Pega aquí el código y pulsa Importar"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px">
           <button id="importBtn" class="btn">Importar</button>
-          <button id="saveLocalRight" class="btn">Guardar local</button>
-          <button id="loadLocalRight" class="btn">Cargar local</button>
         </div>
-        <div style="margin-top:8px;color:var(--muted)" id="status">Listo</div>
-      </div>
 
-      <div class="card">
-        <h3>Opciones</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <label class="muted"><input type="checkbox" id="sfxToggleRight" checked> Sonidos</label>
-          <label class="muted"><input type="checkbox" id="musicToggleRight"> Música</label>
-          <label class="muted"><input type="checkbox" id="autoStartToggle"> Auto-start de autoclickers al cargar</label>
+        <div style="margin-top:10px">
+          <div class="subMuted">Importar código aquí (pegar y pulsar Importar):</div>
+          <textarea id="importArea" class="code" placeholder="Pega aquí el código exportado"></textarea>
+          <div style="display:flex;justify-content:space-between;margin-top:8px">
+            <div class="subMuted">Estado: <span id="status">Listo</span></div>
+            <div style="display:flex;gap:8px">
+              <button id="saveLocal" class="btn">Guardar local</button>
+              <button id="loadLocal" class="btn">Cargar local</button>
+            </div>
+          </div>
         </div>
+
+        <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03);margin:12px 0" />
+
+        <div>
+          <div class="subMuted">Progresión infinita medida</div>
+          <div style="margin-top:6px">Mostramos CPC, rango (prestige) y un indicador de progreso hacia el siguiente rango. Cada ascenso da puntos de prestige que multiplican ganancias.</div>
+        </div>
+
       </div>
-
-      <div class="card">
-        <h3>Consejo</h3>
-        <div class="muted">Usa Ascender para resetear y ganar Rango. El rango multiplica todas tus ganancias. Comparte tu código con amigos.</div>
-      </div>
-    </div>
-
-  </div>
-
-  <!-- Import modal (hidden) -->
-  <div id="importModal" style="position:fixed;left:0;top:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.5)">
-    <div style="background:#071226;padding:12px;border-radius:10px;min-width:320px">
-      <div class="muted">Pega el código exportado:</div>
-      <textarea id="importModalArea" style="width:100%;height:100px;background:#051022;color:#bfefff;margin-top:8px;border-radius:8px;padding:8px"></textarea>
-      <div style="display:flex;gap:8px;margin-top:8px"><button id="importModalBtn" class="btn">Importar</button><button id="importModalClose" class="btn ghost">Cerrar</button></div>
     </div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', ()=>{
-      /* Juego clicker con estética y menú. Corregido: comprobaciones nulas, base64 UTF-8 robusto, listeners seguros. */
+    // Clicker mejorado con export/import y progresión indefinida
+    // ---- Estado ----
+    const state = {
+      score: 0,
+      totalClicks: 0,
+      cpc: 1,
+      clickLevel: 0,
+      autoCount: 0,
+      autoOn: false,
+      prestige: 0,
+      // progression target increases with prestige and clickLevel
+    };
 
-      // --- State ---
-      const state = {
-        score: 0,
-        cpc: 1,
-        clickLevel: 0,
-        autoCount: 0,
-        totalClicks: 0,
-        prestige: 0,
-        shop1: 0,
-        autoOn: false
-      };
-      const cfg = { baseCostClickPower: 10, baseCostAuto: 50, costScaler: 1.16, clickPowerMultiplier: 1.5, prestigeBaseTarget: 1000 };
+    const cfg = {
+      baseCostClickPower: 10,
+      baseCostAuto: 50,
+      costScaler: 1.17,
+      clickPowerMultiplier: 1.5,
+      prestigeBaseTarget: 1000 // base para calcular próximo rango
+    };
 
-      // Helper to get element safely
-      const el = id => document.getElementById(id);
+    // DOM
+    const el = id => document.getElementById(id);
+    const scoreEl = el('score');
+    const cpcEl = el('cpc');
+    const mainClick = el('mainClick');
+    const costClickPower = el('costClickPower');
+    const costAuto = el('costAuto');
+    const buyClickPower = el('buyClickPower');
+    const buyAuto = el('buyAuto');
+    const toggleAuto = el('toggleAuto');
+    const autoCountEl = el('autoCount');
+    const perSec = el('perSec');
+    const totalClicksEl = el('totalClicks');
+    const clickUpgLevel = el('clickLevel');
+    const costClickPowerRight = el('costClickPowerRight');
+    const costAutoRight = el('costAutoRight');
+    const autoCountRight = el('autoCountRight');
+    const prestigeEl = el('prestige');
+    const progressFill = el('progressFill');
+    const exportArea = el('exportArea');
+    const exportBtn = el('exportBtn');
+    const importBtn = el('importBtn');
+    const importArea = el('importArea');
+    const copyExport = el('copyExport');
+    const statusEl = el('status');
+    const saveLocalBtn = el('saveLocal');
+    const loadLocalBtn = el('loadLocal');
+    const ascendBtn = el('ascend');
+    const resetBtn = el('reset');
 
-      // DOM refs (some may be null if DOM changed) -------------------------------------------------
-      const scoreEl = el('score'); const cpcEl = el('cpc'); const clickOrb = el('clickOrb');
-      const costClickPower = el('costClickPower'); const costAuto = el('costAuto');
-      const buyClickPower = el('buyClickPower'); const buyAuto = el('buyAuto');
-      const autoCountEl = el('autoCount'); const perSec = el('perSec'); const totalClicksEl = el('totalClicks');
-      const progressFill = el('progressFill'); const targetEl = el('target'); const prestigeEl = el('prestige');
+    // particles canvas
+    const particlesCanvas = document.getElementById('particles');
+    const ctx = particlesCanvas.getContext('2d');
+    let particles = [];
+    function resizeCanvas(){ particlesCanvas.width = particlesCanvas.clientWidth; particlesCanvas.height = particlesCanvas.clientHeight; }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-      const exportArea = el('exportArea'); const exportBtnRight = el('exportBtnRight'); const copyExport = el('copyExport');
-      const importArea = el('importArea'); const importBtn = el('importBtn'); const statusEl = el('status');
-      const saveLocalBtn = el('saveLocalRight'); const loadLocalBtn = el('loadLocalRight'); const resetBtn = el('reset');
-      const shop1CostEl = el('shop1Cost'); const shop1CountEl = el('shop1Count');
-      const ascendBtn = el('ascend'); const toggleAutoBtn = el('toggleAuto');
+    // ---- Utils ----
+    function formatN(n){
+      if (!isFinite(n)) return '∞';
+      const abs = Math.abs(n);
+      if (abs < 10000) return Math.floor(n).toString();
+      const units = ['K','M','B','T','P','E'];
+      let u = 0; let val = n;
+      while (Math.abs(val) >= 1000 && u < units.length-1){ val /= 1000; u++; }
+      if (u < units.length) return val.toFixed(2)+units[u-1] || val.toFixed(2)+units[u];
+      return val.toExponential(2);
+    }
 
-      // menu refs
-      const openMenuBtn = el('openMenu'); const menuPanel = el('menuPanel'); const sfxToggle = el('sfxToggle'); const musicToggle = el('musicToggle');
-      const sfxToggleRight = el('sfxToggleRight'); const musicToggleRight = el('musicToggleRight'); const autoStartToggle = el('autoStartToggle');
-      const exportBtnMenu = el('exportBtn'); const importDialogBtn = el('importDialogBtn'); const saveLocalMenu = el('saveLocalMenu'); const loadLocalMenu = el('loadLocalMenu'); const resetMenu = el('resetMenu');
+    function calcCost(base, count){
+      return Math.ceil(base * Math.pow(cfg.costScaler, count));
+    }
 
-      // import modal
-      const importModal = el('importModal'); const importModalArea = el('importModalArea'); const importModalBtn = el('importModalBtn'); const importModalClose = el('importModalClose');
+    function prestigeTarget(prestige){
+      // objetivo crece exponencialmente: base * (1.8^prestige)
+      return Math.ceil(cfg.prestigeBaseTarget * Math.pow(1.8, prestige));
+    }
 
-      // audio context - try/catch because some browsers block AudioContext until user gesture
-      let audioCtx = null;
-      try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
-      function playClick(){ if(!(sfxToggle && sfxToggle.checked) && !(sfxToggleRight && sfxToggleRight.checked)) return; if(!audioCtx) return; try{ const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime(520, audioCtx.currentTime); g.gain.setValueAtTime(0.02, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.06);}catch(e){} }
+    function gainMultiplierFromPrestige(prestige){
+      // cada punto de prestige aumenta ganancias en 5% (stacking multiplicativo)
+      return Math.pow(1.05, prestige);
+    }
 
-      // visuals: float text
-      function floatText(x,y, text){ const d=document.createElement('div'); d.className='float'; d.style.left=(x)+'px'; d.style.top=(y)+'px'; d.style.color='white'; d.style.fontSize='16px'; d.textContent = text; document.body.appendChild(d); let t=0; const id=setInterval(()=>{ t+=1; d.style.transform = `translateY(${ -t*1.6 }px) scale(${1-t*0.002})`; d.style.opacity = String(1 - t/30); if(t>30){ clearInterval(id); d.remove(); }},16); }
+    // ---- Visuals: particles ----
+    function spawnParticles(x,y, color){
+      for(let i=0;i<18;i++){
+        particles.push({x,y, vx:(Math.random()-0.5)*6, vy:(Math.random()-1.5)*-6, life:60+Math.random()*40, r:2+Math.random()*4, color});
+      }
+    }
 
-      // progression utils
-      function formatN(n){ if(!isFinite(n)) return '∞'; const abs=Math.abs(n); if(abs<10000) return Math.floor(n).toString(); const units=['K','M','B','T','Q']; let u=0; let val=n; while(Math.abs(val)>=1000 && u<units.length-1){ val/=1000; u++; } return val.toFixed(2)+units[u-1] || val.toFixed(2)+units[u]; }
-      function calcCost(base,count){ return Math.ceil(base * Math.pow(cfg.costScaler, count)); }
-      function prestigeTarget(prestige){ return Math.ceil(cfg.prestigeBaseTarget * Math.pow(1.8, prestige)); }
-      function gainMultiplierFromPrestige(p){ return Math.pow(1.05, p); }
-      function clickValue(){ return state.cpc * gainMultiplierFromPrestige(state.prestige); }
+    function updateParticles(){
+      ctx.clearRect(0,0,particlesCanvas.width,particlesCanvas.height);
+      for(let i=particles.length-1;i>=0;i--){
+        const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.life-=1;
+        ctx.beginPath(); ctx.globalAlpha = Math.max(0, p.life/100);
+        ctx.fillStyle = p.color; ctx.arc(p.x, p.y, p.r,0,Math.PI*2); ctx.fill();
+        if(p.life<=0) particles.splice(i,1);
+      }
+      requestAnimationFrame(updateParticles);
+    }
+    requestAnimationFrame(updateParticles);
 
-      // orb particles canvas
-      const mainPanel = el('mainPanel');
-      const orbCanvas = document.createElement('canvas'); orbCanvas.style.position='absolute'; orbCanvas.style.left='0'; orbCanvas.style.top='0'; orbCanvas.style.pointerEvents='none'; if(mainPanel) mainPanel.appendChild(orbCanvas);
-      const orbCtx = orbCanvas.getContext ? orbCanvas.getContext('2d') : null;
-      function resizeOrb(){ if(!mainPanel || !orbCanvas) return; const r=mainPanel.getBoundingClientRect(); orbCanvas.width = r.width; orbCanvas.height = r.height; orbCanvas.style.width = r.width+'px'; orbCanvas.style.height = r.height+'px'; }
-      window.addEventListener('resize', resizeOrb); resizeOrb();
-      let particles=[];
-      function spawnOrbParticles(x,y, color){ if(!orbCtx) return; for(let i=0;i<18;i++){ particles.push({x,y,vx:(Math.random()-0.5)*6,vy:(Math.random()-1.5)*-6,life:40+Math.random()*40,r:2+Math.random()*3,color}); } }
-      function updateOrbParticles(){ if(!orbCtx) return; orbCtx.clearRect(0,0,orbCanvas.width,orbCanvas.height); for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.2; p.life-=1; orbCtx.globalAlpha = Math.max(0,p.life/60); orbCtx.fillStyle = p.color; orbCtx.beginPath(); orbCtx.arc(p.x,p.y,p.r,0,Math.PI*2); orbCtx.fill(); if(p.life<=0) particles.splice(i,1); } requestAnimationFrame(updateOrbParticles); }
-      requestAnimationFrame(updateOrbParticles);
+    // floating numbers animation
+    function floatText(x,y, text){
+      const span = document.createElement('div');
+      span.className='floatNum'; span.style.left = (x-10)+'px'; span.style.top=(y-10)+'px'; span.textContent = text; span.style.zIndex=9999; span.style.color='white'; span.style.fontSize='14px';
+      document.body.appendChild(span);
+      const start = performance.now();
+      function anim(t){
+        const dt = (t-start)/600; span.style.opacity = String(1-dt);
+        span.style.transform = `translateY(${ -dt*40 }px) scale(${1+dt*0.1})`;
+        if(dt<1) requestAnimationFrame(anim); else span.remove();
+      }
+      requestAnimationFrame(anim);
+    }
 
-      // --- Actions ---
-      function doClick(e){ const val = clickValue(); state.score += val; state.totalClicks += 1; playClick(); const rect = mainPanel ? mainPanel.getBoundingClientRect() : {left:0,top:0,width:300,height:300}; const x = (e && e.clientX) ? e.clientX - rect.left : rect.width/2; const y = (e && e.clientY) ? e.clientY - rect.top : rect.height/2; spawnOrbParticles(x,y,'rgba(255,255,255,0.9)'); floatText(rect.left + x, rect.top + y, '+'+formatN(val)); updateUI(); save(); }
+    // ---- Game logic ----
+    function clickValue(){
+      return state.cpc * gainMultiplierFromPrestige(state.prestige);
+    }
 
-      function buyClickPowerAction(){ const cost = calcCost(cfg.baseCostClickPower, state.clickLevel); if(state.score >= cost){ state.score -= cost; state.clickLevel += 1; state.cpc = Math.round((state.cpc * cfg.clickPowerMultiplier)*100)/100; spawnOrbParticles(120,80,'rgba(255,200,200,0.8)'); updateUI(); save(); } }
-      function buyAutoAction(){ const cost = calcCost(cfg.baseCostAuto, state.autoCount); if(state.score >= cost){ state.score -= cost; state.autoCount += 1; spawnOrbParticles(160,120,'rgba(180,230,255,0.9)'); updateUI(); save(); } }
+    function doClick(evt){
+      const val = clickValue();
+      state.score += val;
+      state.totalClicks += 1;
+      // spawn particles at random point inside visuals
+      const rect = document.getElementById('mainCard').getBoundingClientRect();
+      const cx = (evt && evt.clientX) || (rect.left + rect.width/2);
+      const cy = (evt && evt.clientY) || (rect.top + rect.height/2);
+      spawnParticles(cx - rect.left, cy - rect.top, '#bfeeff');
+      floatText(cx,cy, '+'+formatN(val));
+      updateUI(); save();
+    }
 
-      let autoInterval = null;
-      function startAutoclickers(){ if(autoInterval) clearInterval(autoInterval); state.autoOn = true; updateUI(); autoInterval = setInterval(()=>{ const gain = state.autoCount * clickValue(); if(gain>0){ state.score += gain; updateUI(); save(); } },1000); }
-      function stopAutoclickers(){ if(autoInterval) clearInterval(autoInterval); autoInterval=null; state.autoOn=false; updateUI(); }
-      function toggleAutoclickers(){ if(state.autoOn) stopAutoclickers(); else startAutoclickers(); }
+    function buyClickPowerAction(){
+      const cost = calcCost(cfg.baseCostClickPower, state.clickLevel);
+      if (state.score >= cost){ state.score -= cost; state.clickLevel += 1; state.cpc = Math.round((state.cpc * cfg.clickPowerMultiplier)*100)/100; spawnParticles(100,50,'#d3b4ff'); updateUI(); save(); }
+    }
 
-      function ascend(){ const target = prestigeTarget(state.prestige); if(state.score < target){ alert('Necesitas ' + formatN(target) + ' para ascender.'); return; } const gained = Math.max(1, Math.floor(Math.log10(state.score / target + 1))); if(!confirm('Ascenderás y reiniciarás a cambio de +' + gained + ' rango(s). Continuar?')) return; state.prestige += gained; state.score = 0; state.cpc = 1; state.clickLevel = 0; state.autoCount = 0; state.totalClicks = 0; state.shop1 = 0; stopAutoclickers(); updateUI(); save(); }
+    function buyAutoAction(){
+      const cost = calcCost(cfg.baseCostAuto, state.autoCount);
+      if (state.score >= cost){ state.score -= cost; state.autoCount += 1; spawnParticles(200,60,'#a8f0ff'); updateUI(); save(); }
+    }
 
-      function resetAll(){ if(!confirm('Reiniciar todo?')) return; localStorage.removeItem(SAVE_KEY); Object.assign(state,{score:0,cpc:1,clickLevel:0,autoCount:0,totalClicks:0,prestige:0,shop1:0,autoOn:false}); stopAutoclickers(); updateUI(); }
+    let autoInterval = null;
+    function startAutoclickers(){
+      if (autoInterval) clearInterval(autoInterval);
+      state.autoOn = true; updateUI();
+      autoInterval = setInterval(()=>{
+        const gain = state.autoCount * clickValue();
+        if (gain>0){ state.score += gain; updateUI(); save(); }
+      }, 1000);
+    }
+    function stopAutoclickers(){ if (autoInterval) clearInterval(autoInterval); autoInterval=null; state.autoOn=false; updateUI(); }
+    function toggleAutoclickers(){ if (state.autoOn) stopAutoclickers(); else startAutoclickers(); }
 
-      function buyShop1(){ const cost = Math.ceil(500 * Math.pow(1.4, state.shop1)); if(state.score >= cost){ state.score -= cost; state.shop1 += 1; state.cpc = Math.round((state.cpc * (1 + 0.12)) * 100)/100; updateUI(); save(); } }
+    function ascend(){
+      const target = prestigeTarget(state.prestige);
+      if (state.score < target) { alert('Necesitas ' + formatN(target) + ' puntos para ascender.'); return; }
+      // compute prestige gained: floor(log10(score/target)) + 1 maybe
+      const gained = Math.floor(Math.log10(state.score / target + 1));
+      const prestigeGain = Math.max(1, gained);
+      if (!confirm('Ascenderás y resetearás progreso a cambio de +'+prestigeGain+' rango(s). Continuar?')) return;
+      state.prestige += prestigeGain;
+      // reset many fields but keep prestige
+      state.score = 0; state.cpc = 1; state.clickLevel = 0; state.autoCount = 0; state.totalClicks = 0;
+      stopAutoclickers(); spawnParticles(150,70,'#fff2b6'); updateUI(); save();
+    }
 
-      // --- Persistence helpers (UTF-8 safe base64) ---
-      const SAVE_KEY = 'realm_orbs_v1';
-      function save(){ try{ const s = {...state}; delete s.autoOn; localStorage.setItem(SAVE_KEY, JSON.stringify(s)); if(statusEl) statusEl.textContent = 'Guardado local'; }catch(e){ console.warn(e); if(statusEl) statusEl.textContent = 'Error guardando'; } }
-      function load(){ try{ const raw = localStorage.getItem(SAVE_KEY); if(raw){ const s = JSON.parse(raw); Object.assign(state, s); } }catch(e){ console.warn('load failed',e); } }
+    function resetAll(){ if (!confirm('¿Reiniciar todo? (perderás progreso)')) return; localStorage.removeItem(SAVE_KEY); Object.assign(state, {score:0,totalClicks:0,cpc:1,clickLevel:0,autoCount:0,autoOn:false,prestige:0}); stopAutoclickers(); updateUI(); }
 
-      // base64 UTF-8 safe using TextEncoder/Decoder
-      function exportCode(){ const payload = {...state, exportedAt:Date.now()}; const json = JSON.stringify(payload); try{ const bytes = new TextEncoder().encode(json); let binary = ''; for(let i=0;i<bytes.length;i++) binary += String.fromCharCode(bytes[i]); return btoa(binary); }catch(e){ return btoa(unescape(encodeURIComponent(json))); } }
-      function importCode(code){ try{ let binary = atob(code.trim()); const bytes = new Uint8Array(binary.length); for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i); const json = new TextDecoder().decode(bytes); const data = JSON.parse(json);
-          if(typeof data.score !== 'number') throw new Error('Formato inválido'); Object.assign(state, { score: data.score||0, cpc: data.cpc||1, clickLevel: data.clickLevel||0, autoCount: data.autoCount||0, totalClicks: data.totalClicks||0, prestige: data.prestige||0, shop1: data.shop1||0 }); updateUI(); save(); if(statusEl) statusEl.textContent = 'Importado OK'; }catch(e){ console.error(e); if(statusEl) statusEl.textContent = 'Error importando: '+(e.message||e); } }
+    // ---- Persistence: local + export/import ----
+    const SAVE_KEY = 'clicker_epic_v2';
+    function save(){ try{ const s = {...state}; delete s.autoOn; localStorage.setItem(SAVE_KEY, JSON.stringify(s)); }catch(e){ console.warn('save failed',e); } }
+    function load(){ try{ const raw = localStorage.getItem(SAVE_KEY); if(raw){ const s = JSON.parse(raw); Object.assign(state,s); } }catch(e){console.warn('load failed',e);} }
 
-      // --- UI updates & binding ---
-      function updateUI(){ if(scoreEl) scoreEl.textContent = formatN(state.score); if(cpcEl) cpcEl.textContent = formatN(state.cpc * gainMultiplierFromPrestige(state.prestige)); if(costClickPower) costClickPower.textContent = calcCost(cfg.baseCostClickPower,state.clickLevel); if(costAuto) costAuto.textContent = calcCost(cfg.baseCostAuto,state.autoCount); if(shop1CostEl) shop1CostEl.textContent = Math.ceil(500 * Math.pow(1.4,state.shop1)); if(shop1CountEl) shop1CountEl.textContent = state.shop1; if(autoCountEl) autoCountEl.textContent = state.autoCount; if(perSec) perSec.textContent = formatN(state.autoCount * clickValue()); if(totalClicksEl) totalClicksEl.textContent = formatN(state.totalClicks); if(prestigeEl) prestigeEl.textContent = state.prestige; if(targetEl) targetEl.textContent = formatN(prestigeTarget(state.prestige)); if(progressFill) progressFill.style.width = (Math.min(1, state.score / prestigeTarget(state.prestige)) * 100) + '%'; if(exportArea) exportArea.value = ''; if(toggleAutoBtn) toggleAutoBtn.textContent = state.autoOn ? 'Parar autos' : 'Encender autos'; }
+    function exportCode(){
+      const payload = {...state, exportedAt: Date.now()};
+      const json = JSON.stringify(payload);
+      // base64 for easy copy/paste
+      return btoa(unescape(encodeURIComponent(json)));
+    }
+    function importCode(code){
+      try{
+        const json = decodeURIComponent(escape(atob(code.trim())));
+        const data = JSON.parse(json);
+        // validate keys
+        if (typeof data.score !== 'number') throw new Error('Formato incorrecto');
+        Object.assign(state, {
+          score: data.score||0,
+          totalClicks: data.totalClicks||0,
+          cpc: data.cpc||1,
+          clickLevel: data.clickLevel||0,
+          autoCount: data.autoCount||0,
+          prestige: data.prestige||0
+        });
+        updateUI(); save(); statusEl.textContent = 'Importado correctamente';
+      }catch(e){ statusEl.textContent = 'Error importando: ' + (e.message||e); }
+    }
 
-      // Safe event binding
-      if(clickOrb) clickOrb.addEventListener('click', (e)=>{ doClick(e); }); window.addEventListener('keydown',(e)=>{ if(e.code==='Space'){ e.preventDefault(); doClick(e); } });
-      if(buyClickPower) buyClickPower.addEventListener('click', buyClickPowerAction); if(buyAuto) buyAuto.addEventListener('click', buyAutoAction); if(toggleAutoBtn) toggleAutoBtn.addEventListener('click', ()=>{ toggleAutoclickers(); }); if(ascendBtn) ascendBtn.addEventListener('click', ascend);
+    exportBtn.addEventListener('click', ()=>{ const code = exportCode(); exportArea.value = code; statusEl.textContent = 'Código generado'; });
+    copyExport.addEventListener('click', ()=>{ if(!exportArea.value) exportArea.value = exportCode(); navigator.clipboard.writeText(exportArea.value).then(()=>statusEl.textContent='Copiado al portapapeles'); });
+    importBtn.addEventListener('click', ()=>{ const code = importArea.value.trim(); if(!code){ statusEl.textContent='Pega un código primero'; return;} importCode(code); });
+    saveLocalBtn.addEventListener('click', ()=>{ save(); statusEl.textContent='Guardado local'; });
+    loadLocalBtn.addEventListener('click', ()=>{ load(); updateUI(); statusEl.textContent='Cargado local'; });
 
-      // menu buttons safe binding
-      if(openMenuBtn && menuPanel) openMenuBtn.addEventListener('click', ()=>{ menuPanel.style.display = menuPanel.style.display === 'none' ? 'block' : 'none'; });
-      if(exportBtnMenu) exportBtnMenu.addEventListener('click', ()=>{ if(exportArea) exportArea.value = exportCode(); if(statusEl) statusEl.textContent='Código generado (panel derecho)'; });
-      if(exportBtnRight) exportBtnRight.addEventListener('click', ()=>{ if(exportArea) exportArea.value = exportCode(); if(statusEl) statusEl.textContent='Código generado'; });
-      if(copyExport) copyExport.addEventListener('click', ()=>{ const code = exportArea && exportArea.value ? exportArea.value : exportCode(); navigator.clipboard.writeText(code).then(()=>{ if(statusEl) statusEl.textContent='Copiado al portapapeles'; }).catch(()=>{ if(statusEl) statusEl.textContent='No se pudo copiar'; }); });
-      if(importDialogBtn) importDialogBtn.addEventListener('click', ()=>{ if(importModal) importModal.style.display='flex'; if(importModalArea) importModalArea.value=''; });
-      if(importBtn) importBtn.addEventListener('click', ()=>{ const code = importArea && importArea.value ? importArea.value.trim() : ''; if(!code){ if(statusEl) statusEl.textContent='Pega un código'; return; } importCode(code); });
-      if(importModalBtn) importModalBtn.addEventListener('click', ()=>{ const code = importModalArea && importModalArea.value ? importModalArea.value.trim() : ''; if(!code){ if(statusEl) statusEl.textContent='Pega un código'; return; } importCode(code); if(importModal) importModal.style.display='none'; });
-      if(importModalClose) importModalClose.addEventListener('click', ()=>{ if(importModal) importModal.style.display='none'; });
+    // keyboard space
+    window.addEventListener('keydown',(e)=>{ if (e.code==='Space'){ e.preventDefault(); doClick(e); } });
 
-      if(saveLocalBtn) saveLocalBtn.addEventListener('click', ()=>{ save(); }); if(loadLocalBtn) loadLocalBtn.addEventListener('click', ()=>{ load(); updateUI(); });
-      if(saveLocalMenu) saveLocalMenu.addEventListener('click', ()=> save()); if(loadLocalMenu) loadLocalMenu.addEventListener('click', ()=>{ load(); updateUI(); }); if(resetMenu) resetMenu.addEventListener('click', ()=> resetAll());
+    // bind actions
+    mainClick.addEventListener('click', doClick);
+    buyClickPower.addEventListener('click', buyClickPowerAction);
+    buyAuto.addEventListener('click', buyAutoAction);
+    toggleAuto.addEventListener('click', ()=>{ toggleAutoclickers(); statusEl.textContent = state.autoOn ? 'Autoclick ON' : 'Autoclick OFF'; });
+    ascendBtn.addEventListener('click', ascend);
+    resetBtn.addEventListener('click', resetAll);
 
-      // shop1 click
-      const shop1El = el('shop1'); if(shop1El) shop1El.addEventListener('click', buyShop1);
+    // UI update
+    function updateUI(){
+      scoreEl.textContent = formatN(state.score);
+      cpcEl.textContent = formatN(state.cpc * gainMultiplierFromPrestige(state.prestige));
+      costClickPower.textContent = calcCost(cfg.baseCostClickPower, state.clickLevel);
+      costClickPowerRight.textContent = calcCost(cfg.baseCostClickPower, state.clickLevel);
+      costAuto.textContent = calcCost(cfg.baseCostAuto, state.autoCount);
+      costAutoRight.textContent = calcCost(cfg.baseCostAuto, state.autoCount);
+      autoCountEl.textContent = state.autoCount; autoCountRight.textContent = state.autoCount;
+      perSec.textContent = formatN(state.autoCount * clickValue());
+      totalClicksEl.textContent = formatN(state.totalClicks);
+      clickUpgLevel.textContent = state.clickLevel;
+      prestigeEl.textContent = state.prestige;
 
-      // sync toggles
-      if(sfxToggle && sfxToggleRight) { sfxToggle.addEventListener('change', ()=> sfxToggleRight.checked = sfxToggle.checked); sfxToggleRight.addEventListener('change', ()=> sfxToggle.checked = sfxToggleRight.checked); }
-      if(musicToggle && musicToggleRight) { musicToggle.addEventListener('change', ()=> musicToggleRight.checked = musicToggle.checked); musicToggleRight.addEventListener('change', ()=> musicToggle.checked = musicToggleRight.checked); }
+      // progress to next prestige
+      const target = prestigeTarget(state.prestige);
+      const pct = Math.min(1, state.score / target);
+      progressFill.style.width = (pct*100) + '%';
 
-      // autos start option
-      try{ if(localStorage.getItem(SAVE_KEY+'_autostart') === 'true') { if(autoStartToggle) autoStartToggle.checked = true; } if(autoStartToggle) autoStartToggle.addEventListener('change', ()=>{ localStorage.setItem(SAVE_KEY+'_autostart', autoStartToggle.checked ? 'true':'false'); }); }catch(e){}
+      // disable buys if not enough
+      buyClickPower.disabled = state.score < calcCost(cfg.baseCostClickPower, state.clickLevel);
+      buyAuto.disabled = state.score < calcCost(cfg.baseCostAuto, state.autoCount);
 
-      // autosave every 3s
-      setInterval(save,3000);
+      // auto button text
+      toggleAuto.textContent = state.autoOn ? 'Parar autoclickers' : 'Encender autoclickers';
+    }
 
-      // init
-      load(); updateUI(); if(state.autoOn && state.autoCount>0) startAutoclickers(); if(autoStartToggle && autoStartToggle.checked && state.autoCount>0) startAutoclickers();
-      setTimeout(resizeOrb,100);
+    // auto-save
+    setInterval(save, 3000);
 
-      // expose state for debugging (optional)
-      window.__realm_state = state;
+    // load at start
+    load(); updateUI(); if (state.autoOn && state.autoCount>0) startAutoclickers();
 
-    }); // DOMContentLoaded
+    // small visual: spawn gentle particles periodically
+    setInterval(()=>{ if(Math.random()<0.35) spawnParticles(Math.random()*particlesCanvas.width, Math.random()*particlesCanvas.height, '#9ee6ff'); }, 800);
+
+    // expose for debugging (optional)
+    window.__clicker_state = state;
   </script>
 </body>
 </html>
