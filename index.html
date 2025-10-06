@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Clicker: Realm of Orbs — Juego</title>
+  <title>Clicker: Realm of Orbs — Juego (corregido)</title>
   <style>
     /* GAME THEME: vibrante, colores neón, gran puntuación y menú estilizado */
     :root{
@@ -90,9 +90,9 @@
             <hr style="border:none;border-top:1px solid rgba(255,255,255,0.03)" />
             <div class="row"><div class="muted">Exportar partida</div><div><button id="exportBtn" class="btn">Exportar</button></div></div>
             <div class="row"><div class="muted">Importar partida</div><div><button id="importDialogBtn" class="btn ghost">Importar</button></div></div>
-            <div class="row"><div class="muted">Guardar local</div><div><button id="saveLocal" class="btn">Guardar</button></div></div>
-            <div class="row"><div class="muted">Cargar local</div><div><button id="loadLocal" class="btn">Cargar</button></div></div>
-            <div class="row"><div class="muted">Reiniciar</div><div><button id="reset" class="btn ghost">Reset</button></div></div>
+            <div class="row"><div class="muted">Guardar local</div><div><button id="saveLocalMenu" class="btn">Guardar</button></div></div>
+            <div class="row"><div class="muted">Cargar local</div><div><button id="loadLocalMenu" class="btn">Cargar</button></div></div>
+            <div class="row"><div class="muted">Reiniciar</div><div><button id="resetMenu" class="btn ghost">Reset</button></div></div>
           </div>
         </div>
       </div>
@@ -132,7 +132,7 @@
           <div style="flex:1">
             <h3 class="muted">Tienda</h3>
             <div class="card">
-              <div class="shop-item">
+              <div class="shop-item" id="shop1">
                 <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><rect width='100%' height='100%' rx='12' fill='%237c3aed'/><text x='50%' y='55%' font-size='36' text-anchor='middle' fill='white' font-family='Arial' dy='.35em'>C</text></svg>" alt="item">
                 <div class="shop-meta">
                   <div style="font-weight:700">Cristal mejorado</div>
@@ -208,151 +208,140 @@
   </div>
 
   <script>
-    /* Juego clicker con estética y menú. Mantiene export/import, guardado local y progresión infinita (prestige).
-       Hecho para pegar como index.html en GitHub Pages.
-    */
+    document.addEventListener('DOMContentLoaded', ()=>{
+      /* Juego clicker con estética y menú. Corregido: comprobaciones nulas, base64 UTF-8 robusto, listeners seguros. */
 
-    // --- Estado ---
-    const state = {
-      score: 0,
-      cpc: 1,
-      clickLevel: 0,
-      autoCount: 0,
-      totalClicks: 0,
-      prestige: 0,
-      shop1: 0,
-      autoOn: false
-    };
+      // --- State ---
+      const state = {
+        score: 0,
+        cpc: 1,
+        clickLevel: 0,
+        autoCount: 0,
+        totalClicks: 0,
+        prestige: 0,
+        shop1: 0,
+        autoOn: false
+      };
+      const cfg = { baseCostClickPower: 10, baseCostAuto: 50, costScaler: 1.16, clickPowerMultiplier: 1.5, prestigeBaseTarget: 1000 };
 
-    const cfg = {
-      baseCostClickPower: 10,
-      baseCostAuto: 50,
-      costScaler: 1.16,
-      clickPowerMultiplier: 1.5,
-      prestigeBaseTarget: 1000
-    };
+      // Helper to get element safely
+      const el = id => document.getElementById(id);
 
-    // DOM refs
-    const el = id => document.getElementById(id);
-    const scoreEl = el('score'); const cpcEl = el('cpc'); const clickOrb = el('clickOrb');
-    const costClickPower = el('costClickPower'); const costAuto = el('costAuto');
-    const buyClickPower = el('buyClickPower'); const buyAuto = el('buyAuto');
-    const autoCountEl = el('autoCount'); const perSec = el('perSec'); const totalClicksEl = el('totalClicks');
-    const progressFill = el('progressFill'); const targetEl = el('target'); const prestigeEl = el('prestige');
+      // DOM refs (some may be null if DOM changed) -------------------------------------------------
+      const scoreEl = el('score'); const cpcEl = el('cpc'); const clickOrb = el('clickOrb');
+      const costClickPower = el('costClickPower'); const costAuto = el('costAuto');
+      const buyClickPower = el('buyClickPower'); const buyAuto = el('buyAuto');
+      const autoCountEl = el('autoCount'); const perSec = el('perSec'); const totalClicksEl = el('totalClicks');
+      const progressFill = el('progressFill'); const targetEl = el('target'); const prestigeEl = el('prestige');
 
-    const exportArea = el('exportArea'); const exportBtn = el('exportBtnRight'); const copyExport = el('copyExport');
-    const importArea = el('importArea'); const importBtn = el('importBtn'); const statusEl = el('status');
-    const saveLocalBtn = el('saveLocalRight'); const loadLocalBtn = el('loadLocalRight'); const resetBtn = el('reset');
-    const shop1CostEl = el('shop1Cost'); const shop1CountEl = el('shop1Count');
-    const ascendBtn = el('ascend'); const toggleAutoBtn = el('toggleAuto');
+      const exportArea = el('exportArea'); const exportBtnRight = el('exportBtnRight'); const copyExport = el('copyExport');
+      const importArea = el('importArea'); const importBtn = el('importBtn'); const statusEl = el('status');
+      const saveLocalBtn = el('saveLocalRight'); const loadLocalBtn = el('loadLocalRight'); const resetBtn = el('reset');
+      const shop1CostEl = el('shop1Cost'); const shop1CountEl = el('shop1Count');
+      const ascendBtn = el('ascend'); const toggleAutoBtn = el('toggleAuto');
 
-    // menu toggles
-    const openMenuBtn = el('openMenu'); const menuPanel = el('menuPanel'); const sfxToggle = el('sfxToggle'); const musicToggle = el('musicToggle');
-    const sfxToggleRight = el('sfxToggleRight'); const musicToggleRight = el('musicToggleRight'); const autoStartToggle = el('autoStartToggle');
+      // menu refs
+      const openMenuBtn = el('openMenu'); const menuPanel = el('menuPanel'); const sfxToggle = el('sfxToggle'); const musicToggle = el('musicToggle');
+      const sfxToggleRight = el('sfxToggleRight'); const musicToggleRight = el('musicToggleRight'); const autoStartToggle = el('autoStartToggle');
+      const exportBtnMenu = el('exportBtn'); const importDialogBtn = el('importDialogBtn'); const saveLocalMenu = el('saveLocalMenu'); const loadLocalMenu = el('loadLocalMenu'); const resetMenu = el('resetMenu');
 
-    // import modal
-    const importModal = el('importModal'); const importModalArea = el('importModalArea'); const importModalBtn = el('importModalBtn'); const importModalClose = el('importModalClose');
+      // import modal
+      const importModal = el('importModal'); const importModalArea = el('importModalArea'); const importModalBtn = el('importModalBtn'); const importModalClose = el('importModalClose');
 
-    // sounds (simple) ----------------------------------
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playClick(){ if(!sfxToggle.checked && !sfxToggleRight.checked) return; try{ const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime(520, audioCtx.currentTime); g.gain.setValueAtTime(0.02, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.06);}catch(e){} }
+      // audio context - try/catch because some browsers block AudioContext until user gesture
+      let audioCtx = null;
+      try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ audioCtx = null; }
+      function playClick(){ if(!(sfxToggle && sfxToggle.checked) && !(sfxToggleRight && sfxToggleRight.checked)) return; if(!audioCtx) return; try{ const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime(520, audioCtx.currentTime); g.gain.setValueAtTime(0.02, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.06);}catch(e){} }
 
-    // visual pop (floating) ----------------------------
-    function floatText(x,y, text){ const d=document.createElement('div'); d.className='float'; d.style.left=(x)+'px'; d.style.top=(y)+'px'; d.style.color='white'; d.style.fontSize='16px'; d.textContent = text; document.body.appendChild(d); let t=0; const id=setInterval(()=>{ t+=1; d.style.transform = `translateY(${ -t*1.6 }px) scale(${1-t*0.002})`; d.style.opacity = String(1 - t/30); if(t>30){ clearInterval(id); d.remove(); }},16); }
+      // visuals: float text
+      function floatText(x,y, text){ const d=document.createElement('div'); d.className='float'; d.style.left=(x)+'px'; d.style.top=(y)+'px'; d.style.color='white'; d.style.fontSize='16px'; d.textContent = text; document.body.appendChild(d); let t=0; const id=setInterval(()=>{ t+=1; d.style.transform = `translateY(${ -t*1.6 }px) scale(${1-t*0.002})`; d.style.opacity = String(1 - t/30); if(t>30){ clearInterval(id); d.remove(); }},16); }
 
-    // progression utils -------------------------------
-    function formatN(n){ if(!isFinite(n)) return '∞'; const abs=Math.abs(n); if(abs<10000) return Math.floor(n).toString(); const units=['K','M','B','T','Q']; let u=0; let val=n; while(Math.abs(val)>=1000 && u<units.length-1){ val/=1000; u++; } return val.toFixed(2)+units[u-1] || val.toFixed(2)+units[u]; }
-    function calcCost(base,count){ return Math.ceil(base * Math.pow(cfg.costScaler, count)); }
-    function prestigeTarget(prestige){ return Math.ceil(cfg.prestigeBaseTarget * Math.pow(1.8, prestige)); }
-    function gainMultiplierFromPrestige(p){ return Math.pow(1.05, p); }
-    function clickValue(){ return state.cpc * gainMultiplierFromPrestige(state.prestige); }
+      // progression utils
+      function formatN(n){ if(!isFinite(n)) return '∞'; const abs=Math.abs(n); if(abs<10000) return Math.floor(n).toString(); const units=['K','M','B','T','Q']; let u=0; let val=n; while(Math.abs(val)>=1000 && u<units.length-1){ val/=1000; u++; } return val.toFixed(2)+units[u-1] || val.toFixed(2)+units[u]; }
+      function calcCost(base,count){ return Math.ceil(base * Math.pow(cfg.costScaler, count)); }
+      function prestigeTarget(prestige){ return Math.ceil(cfg.prestigeBaseTarget * Math.pow(1.8, prestige)); }
+      function gainMultiplierFromPrestige(p){ return Math.pow(1.05, p); }
+      function clickValue(){ return state.cpc * gainMultiplierFromPrestige(state.prestige); }
 
-    // particles: quick canvas for orb effects ----------------
-    const orbCanvas = document.createElement('canvas'); orbCanvas.style.position='absolute'; orbCanvas.style.left='0'; orbCanvas.style.top='0'; orbCanvas.style.pointerEvents='none'; document.getElementById('mainPanel').appendChild(orbCanvas);
-    const orbCtx = orbCanvas.getContext('2d'); function resizeOrb(){ const r=document.getElementById('mainPanel').getBoundingClientRect(); orbCanvas.width=r.width; orbCanvas.height=r.height; orbCanvas.style.width=r.width+'px'; orbCanvas.style.height=r.height+'px'; } window.addEventListener('resize', resizeOrb); resizeOrb();
-    let particles=[];
-    function spawnOrbParticles(x,y, color){ for(let i=0;i<18;i++){ particles.push({x,y,vx:(Math.random()-0.5)*6,vy:(Math.random()-1.5)*-6,life:40+Math.random()*40,r:2+Math.random()*3,color}); } }
-    function updateOrbParticles(){ orbCtx.clearRect(0,0,orbCanvas.width,orbCanvas.height); for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.2; p.life-=1; orbCtx.globalAlpha = Math.max(0,p.life/60); orbCtx.fillStyle = p.color; orbCtx.beginPath(); orbCtx.arc(p.x,p.y,p.r,0,Math.PI*2); orbCtx.fill(); if(p.life<=0) particles.splice(i,1); } requestAnimationFrame(updateOrbParticles); } requestAnimationFrame(updateOrbParticles);
+      // orb particles canvas
+      const mainPanel = el('mainPanel');
+      const orbCanvas = document.createElement('canvas'); orbCanvas.style.position='absolute'; orbCanvas.style.left='0'; orbCanvas.style.top='0'; orbCanvas.style.pointerEvents='none'; if(mainPanel) mainPanel.appendChild(orbCanvas);
+      const orbCtx = orbCanvas.getContext ? orbCanvas.getContext('2d') : null;
+      function resizeOrb(){ if(!mainPanel || !orbCanvas) return; const r=mainPanel.getBoundingClientRect(); orbCanvas.width = r.width; orbCanvas.height = r.height; orbCanvas.style.width = r.width+'px'; orbCanvas.style.height = r.height+'px'; }
+      window.addEventListener('resize', resizeOrb); resizeOrb();
+      let particles=[];
+      function spawnOrbParticles(x,y, color){ if(!orbCtx) return; for(let i=0;i<18;i++){ particles.push({x,y,vx:(Math.random()-0.5)*6,vy:(Math.random()-1.5)*-6,life:40+Math.random()*40,r:2+Math.random()*3,color}); } }
+      function updateOrbParticles(){ if(!orbCtx) return; orbCtx.clearRect(0,0,orbCanvas.width,orbCanvas.height); for(let i=particles.length-1;i>=0;i--){ const p=particles[i]; p.x+=p.vx; p.y+=p.vy; p.vy+=0.2; p.life-=1; orbCtx.globalAlpha = Math.max(0,p.life/60); orbCtx.fillStyle = p.color; orbCtx.beginPath(); orbCtx.arc(p.x,p.y,p.r,0,Math.PI*2); orbCtx.fill(); if(p.life<=0) particles.splice(i,1); } requestAnimationFrame(updateOrbParticles); }
+      requestAnimationFrame(updateOrbParticles);
 
-    // --- Actions ---
-    function doClick(e){ const val = clickValue(); state.score += val; state.totalClicks += 1; playClick(); const rect = document.getElementById('mainPanel').getBoundingClientRect(); const x = (e && e.clientX) ? e.clientX - rect.left : rect.width/2; const y = (e && e.clientY) ? e.clientY - rect.top : rect.height/2; spawnOrbParticles(x,y,'rgba(255,255,255,0.9)'); floatText(rect.left + x, rect.top + y, '+'+formatN(val)); updateUI(); save(); }
+      // --- Actions ---
+      function doClick(e){ const val = clickValue(); state.score += val; state.totalClicks += 1; playClick(); const rect = mainPanel ? mainPanel.getBoundingClientRect() : {left:0,top:0,width:300,height:300}; const x = (e && e.clientX) ? e.clientX - rect.left : rect.width/2; const y = (e && e.clientY) ? e.clientY - rect.top : rect.height/2; spawnOrbParticles(x,y,'rgba(255,255,255,0.9)'); floatText(rect.left + x, rect.top + y, '+'+formatN(val)); updateUI(); save(); }
 
-    function buyClickPowerAction(){ const cost = calcCost(cfg.baseCostClickPower, state.clickLevel); if(state.score >= cost){ state.score -= cost; state.clickLevel += 1; state.cpc = Math.round((state.cpc * cfg.clickPowerMultiplier)*100)/100; spawnOrbParticles(120,80,'rgba(255,200,200,0.8)'); updateUI(); save(); } }
-    function buyAutoAction(){ const cost = calcCost(cfg.baseCostAuto, state.autoCount); if(state.score >= cost){ state.score -= cost; state.autoCount += 1; spawnOrbParticles(160,120,'rgba(180,230,255,0.9)'); updateUI(); save(); } }
+      function buyClickPowerAction(){ const cost = calcCost(cfg.baseCostClickPower, state.clickLevel); if(state.score >= cost){ state.score -= cost; state.clickLevel += 1; state.cpc = Math.round((state.cpc * cfg.clickPowerMultiplier)*100)/100; spawnOrbParticles(120,80,'rgba(255,200,200,0.8)'); updateUI(); save(); } }
+      function buyAutoAction(){ const cost = calcCost(cfg.baseCostAuto, state.autoCount); if(state.score >= cost){ state.score -= cost; state.autoCount += 1; spawnOrbParticles(160,120,'rgba(180,230,255,0.9)'); updateUI(); save(); } }
 
-    let autoInterval = null;
-    function startAutoclickers(){ if(autoInterval) clearInterval(autoInterval); state.autoOn = true; updateUI(); autoInterval = setInterval(()=>{ const gain = state.autoCount * clickValue(); if(gain>0){ state.score += gain; updateUI(); save(); } },1000); }
-    function stopAutoclickers(){ if(autoInterval) clearInterval(autoInterval); autoInterval=null; state.autoOn=false; updateUI(); }
+      let autoInterval = null;
+      function startAutoclickers(){ if(autoInterval) clearInterval(autoInterval); state.autoOn = true; updateUI(); autoInterval = setInterval(()=>{ const gain = state.autoCount * clickValue(); if(gain>0){ state.score += gain; updateUI(); save(); } },1000); }
+      function stopAutoclickers(){ if(autoInterval) clearInterval(autoInterval); autoInterval=null; state.autoOn=false; updateUI(); }
+      function toggleAutoclickers(){ if(state.autoOn) stopAutoclickers(); else startAutoclickers(); }
 
-    function toggleAutoclickers(){ if(state.autoOn) stopAutoclickers(); else startAutoclickers(); }
+      function ascend(){ const target = prestigeTarget(state.prestige); if(state.score < target){ alert('Necesitas ' + formatN(target) + ' para ascender.'); return; } const gained = Math.max(1, Math.floor(Math.log10(state.score / target + 1))); if(!confirm('Ascenderás y reiniciarás a cambio de +' + gained + ' rango(s). Continuar?')) return; state.prestige += gained; state.score = 0; state.cpc = 1; state.clickLevel = 0; state.autoCount = 0; state.totalClicks = 0; state.shop1 = 0; stopAutoclickers(); updateUI(); save(); }
 
-    function ascend(){ const target = prestigeTarget(state.prestige); if(state.score < target){ alert('Necesitas ' + formatN(target) + ' para ascender.'); return; } const gained = Math.max(1, Math.floor(Math.log10(state.score / target + 1))); if(!confirm('Ascenderás y reiniciarás a cambio de +' + gained + ' rango(s). Continuar?')) return; state.prestige += gained; state.score = 0; state.cpc = 1; state.clickLevel = 0; state.autoCount = 0; state.totalClicks = 0; state.shop1 = 0; stopAutoclickers(); updateUI(); save(); }
+      function resetAll(){ if(!confirm('Reiniciar todo?')) return; localStorage.removeItem(SAVE_KEY); Object.assign(state,{score:0,cpc:1,clickLevel:0,autoCount:0,totalClicks:0,prestige:0,shop1:0,autoOn:false}); stopAutoclickers(); updateUI(); }
 
-    function resetAll(){ if(!confirm('Reiniciar todo?')) return; localStorage.removeItem(SAVE_KEY); Object.assign(state,{score:0,cpc:1,clickLevel:0,autoCount:0,totalClicks:0,prestige:0,shop1:0,autoOn:false}); stopAutoclickers(); updateUI(); }
+      function buyShop1(){ const cost = Math.ceil(500 * Math.pow(1.4, state.shop1)); if(state.score >= cost){ state.score -= cost; state.shop1 += 1; state.cpc = Math.round((state.cpc * (1 + 0.12)) * 100)/100; updateUI(); save(); } }
 
-    // shop example
-    function buyShop1(){ const cost = Math.ceil(500 * Math.pow(1.4, state.shop1)); if(state.score >= cost){ state.score -= cost; state.shop1 += 1; // each increases cpc slightly
-      state.cpc = Math.round((state.cpc * (1 + 0.12)) * 100)/100; updateUI(); save(); } }
+      // --- Persistence helpers (UTF-8 safe base64) ---
+      const SAVE_KEY = 'realm_orbs_v1';
+      function save(){ try{ const s = {...state}; delete s.autoOn; localStorage.setItem(SAVE_KEY, JSON.stringify(s)); if(statusEl) statusEl.textContent = 'Guardado local'; }catch(e){ console.warn(e); if(statusEl) statusEl.textContent = 'Error guardando'; } }
+      function load(){ try{ const raw = localStorage.getItem(SAVE_KEY); if(raw){ const s = JSON.parse(raw); Object.assign(state, s); } }catch(e){ console.warn('load failed',e); } }
 
-    // --- Persistence: local + export/import ---
-    const SAVE_KEY = 'realm_orbs_v1';
-    function save(){ try{ const s = {...state}; delete s.autoOn; localStorage.setItem(SAVE_KEY, JSON.stringify(s)); statusEl.textContent = 'Guardado local'; }catch(e){ console.warn(e); statusEl.textContent = 'Error guardando'; } }
-    function load(){ try{ const raw = localStorage.getItem(SAVE_KEY); if(raw){ const s = JSON.parse(raw); Object.assign(state, s); } }catch(e){ console.warn('load failed',e); } }
+      // base64 UTF-8 safe using TextEncoder/Decoder
+      function exportCode(){ const payload = {...state, exportedAt:Date.now()}; const json = JSON.stringify(payload); try{ const bytes = new TextEncoder().encode(json); let binary = ''; for(let i=0;i<bytes.length;i++) binary += String.fromCharCode(bytes[i]); return btoa(binary); }catch(e){ return btoa(unescape(encodeURIComponent(json))); } }
+      function importCode(code){ try{ let binary = atob(code.trim()); const bytes = new Uint8Array(binary.length); for(let i=0;i<binary.length;i++) bytes[i] = binary.charCodeAt(i); const json = new TextDecoder().decode(bytes); const data = JSON.parse(json);
+          if(typeof data.score !== 'number') throw new Error('Formato inválido'); Object.assign(state, { score: data.score||0, cpc: data.cpc||1, clickLevel: data.clickLevel||0, autoCount: data.autoCount||0, totalClicks: data.totalClicks||0, prestige: data.prestige||0, shop1: data.shop1||0 }); updateUI(); save(); if(statusEl) statusEl.textContent = 'Importado OK'; }catch(e){ console.error(e); if(statusEl) statusEl.textContent = 'Error importando: '+(e.message||e); } }
 
-    function exportCode(){ const payload = {...state, exportedAt:Date.now()}; const json = JSON.stringify(payload); return btoa(unescape(encodeURIComponent(json))); }
-    function importCode(code){ try{ const json = decodeURIComponent(escape(atob(code.trim()))); const data = JSON.parse(json); if(typeof data.score !== 'number') throw new Error('Formato inválido'); Object.assign(state, {
-        score: data.score||0, cpc: data.cpc||1, clickLevel: data.clickLevel||0, autoCount: data.autoCount||0, totalClicks: data.totalClicks||0, prestige: data.prestige||0, shop1: data.shop1||0
-      }); updateUI(); save(); statusEl.textContent = 'Importado OK'; }catch(e){ statusEl.textContent = 'Error importando: '+(e.message||e); } }
+      // --- UI updates & binding ---
+      function updateUI(){ if(scoreEl) scoreEl.textContent = formatN(state.score); if(cpcEl) cpcEl.textContent = formatN(state.cpc * gainMultiplierFromPrestige(state.prestige)); if(costClickPower) costClickPower.textContent = calcCost(cfg.baseCostClickPower,state.clickLevel); if(costAuto) costAuto.textContent = calcCost(cfg.baseCostAuto,state.autoCount); if(shop1CostEl) shop1CostEl.textContent = Math.ceil(500 * Math.pow(1.4,state.shop1)); if(shop1CountEl) shop1CountEl.textContent = state.shop1; if(autoCountEl) autoCountEl.textContent = state.autoCount; if(perSec) perSec.textContent = formatN(state.autoCount * clickValue()); if(totalClicksEl) totalClicksEl.textContent = formatN(state.totalClicks); if(prestigeEl) prestigeEl.textContent = state.prestige; if(targetEl) targetEl.textContent = formatN(prestigeTarget(state.prestige)); if(progressFill) progressFill.style.width = (Math.min(1, state.score / prestigeTarget(state.prestige)) * 100) + '%'; if(exportArea) exportArea.value = ''; if(toggleAutoBtn) toggleAutoBtn.textContent = state.autoOn ? 'Parar autos' : 'Encender autos'; }
 
-    // UI: update
-    function updateUI(){ scoreEl.textContent = formatN(state.score); cpcEl.textContent = formatN(state.cpc * gainMultiplierFromPrestige(state.prestige));
-      costClickPower.textContent = calcCost(cfg.baseCostClickPower,state.clickLevel); costAuto.textContent = calcCost(cfg.baseCostAuto,state.autoCount); shop1CostEl.textContent = Math.ceil(500 * Math.pow(1.4,state.shop1)); shop1CountEl.textContent = state.shop1;
-      autoCountEl.textContent = state.autoCount; perSec.textContent = formatN(state.autoCount * clickValue()); totalClicksEl.textContent = formatN(state.totalClicks); prestigeEl.textContent = state.prestige; targetEl.textContent = formatN(prestigeTarget(state.prestige));
-      const pct = Math.min(1, state.score / prestigeTarget(state.prestige)); progressFill.style.width = (pct*100)+'%'; exportArea.value = ''; // clear until user exports
-      // toggle button text
-      toggleAutoBtn.textContent = state.autoOn ? 'Parar autos' : 'Encender autos';
-    }
+      // Safe event binding
+      if(clickOrb) clickOrb.addEventListener('click', (e)=>{ doClick(e); }); window.addEventListener('keydown',(e)=>{ if(e.code==='Space'){ e.preventDefault(); doClick(e); } });
+      if(buyClickPower) buyClickPower.addEventListener('click', buyClickPowerAction); if(buyAuto) buyAuto.addEventListener('click', buyAutoAction); if(toggleAutoBtn) toggleAutoBtn.addEventListener('click', ()=>{ toggleAutoclickers(); }); if(ascendBtn) ascendBtn.addEventListener('click', ascend);
 
-    // Buttons and events
-    clickOrb.addEventListener('click', (e)=>{ doClick(e); }); window.addEventListener('keydown',(e)=>{ if(e.code==='Space'){ e.preventDefault(); doClick(); } });
-    buyClickPower.addEventListener('click', buyClickPowerAction); buyAuto.addEventListener('click', buyAutoAction); toggleAutoBtn.addEventListener('click', ()=>{ toggleAutoclickers(); }); ascendBtn.addEventListener('click', ascend); resetBtn.addEventListener('click', resetAll);
+      // menu buttons safe binding
+      if(openMenuBtn && menuPanel) openMenuBtn.addEventListener('click', ()=>{ menuPanel.style.display = menuPanel.style.display === 'none' ? 'block' : 'none'; });
+      if(exportBtnMenu) exportBtnMenu.addEventListener('click', ()=>{ if(exportArea) exportArea.value = exportCode(); if(statusEl) statusEl.textContent='Código generado (panel derecho)'; });
+      if(exportBtnRight) exportBtnRight.addEventListener('click', ()=>{ if(exportArea) exportArea.value = exportCode(); if(statusEl) statusEl.textContent='Código generado'; });
+      if(copyExport) copyExport.addEventListener('click', ()=>{ const code = exportArea && exportArea.value ? exportArea.value : exportCode(); navigator.clipboard.writeText(code).then(()=>{ if(statusEl) statusEl.textContent='Copiado al portapapeles'; }).catch(()=>{ if(statusEl) statusEl.textContent='No se pudo copiar'; }); });
+      if(importDialogBtn) importDialogBtn.addEventListener('click', ()=>{ if(importModal) importModal.style.display='flex'; if(importModalArea) importModalArea.value=''; });
+      if(importBtn) importBtn.addEventListener('click', ()=>{ const code = importArea && importArea.value ? importArea.value.trim() : ''; if(!code){ if(statusEl) statusEl.textContent='Pega un código'; return; } importCode(code); });
+      if(importModalBtn) importModalBtn.addEventListener('click', ()=>{ const code = importModalArea && importModalArea.value ? importModalArea.value.trim() : ''; if(!code){ if(statusEl) statusEl.textContent='Pega un código'; return; } importCode(code); if(importModal) importModal.style.display='none'; });
+      if(importModalClose) importModalClose.addEventListener('click', ()=>{ if(importModal) importModal.style.display='none'; });
 
-    // menu
-    openMenuBtn.addEventListener('click', ()=>{ menuPanel.style.display = menuPanel.style.display === 'none' ? 'block' : 'none'; });
-    el('exportBtn').addEventListener('click', ()=>{ const code = exportCode(); exportArea.value = code; statusEl.textContent = 'Código generado (panel derecho)'; });
+      if(saveLocalBtn) saveLocalBtn.addEventListener('click', ()=>{ save(); }); if(loadLocalBtn) loadLocalBtn.addEventListener('click', ()=>{ load(); updateUI(); });
+      if(saveLocalMenu) saveLocalMenu.addEventListener('click', ()=> save()); if(loadLocalMenu) loadLocalMenu.addEventListener('click', ()=>{ load(); updateUI(); }); if(resetMenu) resetMenu.addEventListener('click', ()=> resetAll());
 
-    // right panel export/import
-    exportBtn.addEventListener('click', ()=>{ const code = exportCode(); exportArea.value = code; statusEl.textContent = 'Código generado'; });
-    copyExport.addEventListener('click', ()=>{ if(!exportArea.value) exportArea.value = exportCode(); navigator.clipboard.writeText(exportArea.value).then(()=>statusEl.textContent='Copiado al portapapeles'); });
-    el('openImport').addEventListener('click', ()=>{ importModal.style.display='flex'; importModalArea.value=''; });
-    importBtn.addEventListener('click', ()=>{ const code = importArea.value.trim(); if(!code){ statusEl.textContent='Pega un código'; return; } importCode(code); });
-    importModalBtn.addEventListener('click', ()=>{ const code = importModalArea.value.trim(); if(!code) { statusEl.textContent='Pega un código'; return;} importCode(code); importModal.style.display='none'; });
-    importModalClose.addEventListener('click', ()=>importModal.style.display='none');
+      // shop1 click
+      const shop1El = el('shop1'); if(shop1El) shop1El.addEventListener('click', buyShop1);
 
-    saveLocalBtn.addEventListener('click', ()=>{ save(); }); loadLocalBtn.addEventListener('click', ()=>{ load(); updateUI(); });
+      // sync toggles
+      if(sfxToggle && sfxToggleRight) { sfxToggle.addEventListener('change', ()=> sfxToggleRight.checked = sfxToggle.checked); sfxToggleRight.addEventListener('change', ()=> sfxToggle.checked = sfxToggleRight.checked); }
+      if(musicToggle && musicToggleRight) { musicToggle.addEventListener('change', ()=> musicToggleRight.checked = musicToggle.checked); musicToggleRight.addEventListener('change', ()=> musicToggle.checked = musicToggleRight.checked); }
 
-    // right side toggles sync
-    sfxToggle.addEventListener('change', ()=>{ sfxToggleRight.checked = sfxToggle.checked; }); sfxToggleRight.addEventListener('change', ()=>{ sfxToggle.checked = sfxToggleRight.checked; });
-    musicToggle.addEventListener('change', ()=>{ musicToggleRight.checked = musicToggle.checked; }); musicToggleRight.addEventListener('change', ()=>{ musicToggle.checked = musicToggleRight.checked; });
+      // autos start option
+      try{ if(localStorage.getItem(SAVE_KEY+'_autostart') === 'true') { if(autoStartToggle) autoStartToggle.checked = true; } if(autoStartToggle) autoStartToggle.addEventListener('change', ()=>{ localStorage.setItem(SAVE_KEY+'_autostart', autoStartToggle.checked ? 'true':'false'); }); }catch(e){}
 
-    // small shop example click handler
-    document.querySelector('.shop-item').addEventListener('click', buyShop1);
+      // autosave every 3s
+      setInterval(save,3000);
 
-    // autos start option
-    if(localStorage.getItem(SAVE_KEY+'_autostart') === 'true') autoStartToggle.checked = true;
-    autoStartToggle.addEventListener('change', ()=>{ localStorage.setItem(SAVE_KEY+'_autostart', autoStartToggle.checked ? 'true':'false'); });
+      // init
+      load(); updateUI(); if(state.autoOn && state.autoCount>0) startAutoclickers(); if(autoStartToggle && autoStartToggle.checked && state.autoCount>0) startAutoclickers();
+      setTimeout(resizeOrb,100);
 
-    // autosave every 3s
-    setInterval(save,3000);
+      // expose state for debugging (optional)
+      window.__realm_state = state;
 
-    // init load
-    load(); updateUI(); if(state.autoOn && state.autoCount>0) startAutoclickers(); if(autoStartToggle.checked && state.autoCount>0) startAutoclickers();
-
-    // resize orb canvas on init
-    setTimeout(resizeOrb,100);
-
-    // expose state for debugging
-    window.__realm_state = state;
+    }); // DOMContentLoaded
   </script>
 </body>
 </html>
